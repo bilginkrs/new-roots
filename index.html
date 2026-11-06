@@ -4,9 +4,15 @@
 body{padding-bottom:88px}header{position:relative;z-index:2}.layout{display:block;max-width:1200px}.scene{position:relative!important;top:auto!important}.sidebar{position:fixed;right:0;top:0;bottom:78px;width:min(430px,94vw);background:#0c1720;z-index:20;padding:14px;overflow:auto;transform:translateX(105%);transition:transform .2s;box-shadow:-15px 0 60px #0006}.sidebar.open{transform:translateX(0)}.stats{position:fixed;bottom:0;left:0;right:0;z-index:25;margin:0;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:#10242eee;grid-template-columns:repeat(4,1fr);backdrop-filter:blur(12px)}.stat{padding:7px}.stat b{font-size:clamp(12px,2.5vw,18px)}.stat small{font-size:10px}button{min-height:44px}.scenefoot{min-height:76px}canvas{width:min(100%, calc(57vh * 1.470588));height:auto;max-height:none;margin:auto}.shade{position:fixed;inset:0;background:#0007;z-index:19}.hidden{display:none}.progress{height:5px;background:#274e50;border-radius:5px;margin:10px 0}.progress i{display:block;height:100%;background:#7ee5b1;width:0}#toast{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:40;background:#254c42;padding:12px;border-radius:12px;max-width:90vw;font-size:13px;pointer-events:none}.steps{padding:12px 14px;background:#1b3943;line-height:1.6;font-size:13px}button:focus-visible{outline:3px solid #fff} @media(max-width:600px){header small{font-size:10px}.stat{border-radius:7px}canvas{max-height:none}.scenefoot{align-items:flex-start}}
 canvas{image-rendering:pixelated}.viewnav{display:flex;gap:8px;padding:10px;background:#182e32}.viewnav button[aria-pressed=true]{background:#76c396;color:#132b20}.viewnav button{flex:1}.scene{background:#29463d}
 .clock-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.clock-controls select{background:#254550;color:#fff;padding:7px;border-radius:6px}.clock-controls label{font-size:12px}
-</style></head><body><header><div><h1>🌱 <span class="brand">NEW ROOTS</span> <span style="font-weight:400">/ Niğde</span></h1><small>Bir şirket büyür. Bir şehir değişir.</small></div><button id="menuBtn" aria-label="Yönetim menüsünü aç" aria-expanded="false">☰ Yönetim</button><div style="text-align:right"><b id="date">Ocak 2026</b><br><small id="turn">1. ay</small></div></header><div id="shade" class="shade hidden"></div><div id="toast" class="hidden" role="status"></div><div class="layout"><div class="panel scene"><nav class="viewnav" aria-label="Bölge seçimi"><button id="industryView" aria-pressed="true">Sanayi bölgesi</button><button id="cityView" aria-pressed="false">Niğde şehir merkezi</button></nav><canvas id="map" width="640" height="435" aria-label="Niğde piksel haritası"></canvas><div class="scenefoot"><div><b id="selected">🌱 Niğde · Boş arazi</b><div class="muted" style="font-size:12px" id="selectedText">Önce Yönetim → Finans menüsünden yatırım kredisi al.</div></div><span class="legend">Araziye dokun · fabrika kur</span></div><div class="pad" style="padding-top:0"><div class="stats"><div class="stat"><small>Şirket nakdi</small><b id="cash">—</b></div><div class="stat"><small>Kalan borç</small><b id="debt">—</b></div><div class="stat"><small>Günlük üretim</small><b id="population">—</b></div><div class="stat"><small>Çalışan</small><b id="staff">—</b></div></div><div class="row"><div><small>Son gün net nakit akışı</small><div id="net" style="font-weight:750">—</div></div><div class="clock-controls"><label>Hız <select id="speed"><option value="0">Duraklat</option><option value="1">1×</option><option value="2">2×</option><option value="5">5×</option><option value="10">10×</option></select></label><button id="next">+1 gün</button><button id="week">+1 hafta</button><button id="month">+1 ay</button></div></div><p class="note">Oyun otomatik olarak bu cihazın tarayıcısında kaydedilir. Ekonomi rakamları oynanış için kurgulanmıştır.</p></div></div><div class="sidebar" id="drawer"><button id="closeMenu">✕ Menüyü kapat</button><div class="panel"><div class="tabs"><button class="active" data-tab="business">🏭 Şirket</button><button data-tab="finance">💳 Finans</button><button data-tab="city">🏙️ Şehir</button><button data-tab="history">📊 Rapor</button></div><div class="pad" id="content"></div></div><div class="panel pad"><h2>📰 Niğde Günlüğü</h2><div class="log" id="log"></div></div><div class="row"><button id="reset">↻ Yeni oyun</button><button id="saveGame">Kaydet</button><button id="export">⬇ Kayıt dosyası</button><label style="font-size:12px"><input type="file" id="import" accept="application/json" style="display:none"><button id="importBtn">⬆ Kayıt yükle</button></label></div></div></div><script>
-const $=x=>document.getElementById(x),fmt=n=>Math.round(n).toLocaleString('tr-TR'),money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n),short=n=>Math.abs(n)>=1e6?'$'+(n/1e6).toFixed(2)+' Mn':money(n);const KEY='new-roots-nigde-v4';const ANNUAL_RATE=.02, TERM=240, DAY_MS=10000, LINES=4, HIRE_COST=5000;const init=()=>({version:4,month:0,cash:0,debt:0,rate:ANNUAL_RATE,term:60,pop:8500,cityStage:0,staff:0,lines:0,farm:false,automation:0,research:0,solar:0,commercial:0,education:0,sport:0,culture:0,housing:0,energy:0,reputation:38,happiness:46,skill:42,lastNet:0,lastRevenue:0,lastCosts:0,lastDebtPaid:0,logs:['Niğde: Boş arazide yeni bir başlangıç. İlk adım: başlangıç sektörünü seç.'],events:[],gameover:false,businesses:[],lastTick:Date.now(),dayProgress:0,totalProduced:0,paused:false,speed:1,scenario:null,starterFunded:false,contractIncome:0,loans:[],revenueHistory:[],partners:[]});
-function validateSave(o){if(!o||typeof o!=='object'||!Array.isArray(o.logs)||o.logs.some(v=>typeof v!=='string'))throw Error('Kayıt biçimi');for(const [k,v] of Object.entries(init()))if(typeof v==='number'&&o[k]!==undefined&&(!Number.isFinite(o[k])||Math.abs(o[k])>1e15))throw Error('Geçersiz sayı');for(const k of ['month','debt','staff','lines','automation','research','solar'])if(o[k]!==undefined&&o[k]<0)throw Error('Negatif değer');if(o.staff>120||o.lines>8||o.automation>5||o.research>5||o.solar>3||o.businesses&&(!Array.isArray(o.businesses)||o.businesses.length>30))throw Error('Limit');for(const b of o.businesses||[])if(!Object.hasOwn(sectors,b.type)||!/^([a-z]+-[0-9]+)$/.test(b.id)||![b.x,b.y,b.staff,b.equipment].every(Number.isFinite)||b.x<0||b.y<0||b.x>8||b.y>8||b.staff<0||b.staff>30||b.equipment<0||b.equipment>4)throw Error('İşletme');}
+.sidebar{overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;touch-action:pan-y}
+.sidebar>*{flex-shrink:0}.sidebar .scroll{max-height:none;overflow:visible}
+.map-viewport{width:min(100%,calc(57vh * 1.470588));margin:auto;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-color:#86a792 #29463d}
+.map-viewport canvas{width:180%;max-width:none;height:auto;margin:0;touch-action:pan-x pan-y;cursor:grab}
+.map-viewport canvas:active{cursor:grabbing}.map-viewport.inside canvas{width:100%;aspect-ratio:1000/680;cursor:default}
+@media(max-width:600px){.map-viewport{width:100%}}
+</style></head><body><header><div><h1>🌱 <span class="brand">NEW ROOTS</span> <span style="font-weight:400">/ Niğde</span></h1><small>Bir şirket büyür. Bir şehir değişir.</small></div><button id="menuBtn" aria-label="Yönetim menüsünü aç" aria-expanded="false">☰ Yönetim</button><div style="text-align:right"><b id="date">Ocak 2026</b><br><small id="turn">1. ay</small></div></header><div id="shade" class="shade hidden"></div><div id="toast" class="hidden" role="status"></div><div class="layout"><div class="panel scene"><nav class="viewnav" aria-label="Bölge seçimi"><button id="industryView" aria-pressed="true">Sanayi bölgesi</button><button id="cityView" aria-pressed="false">Niğde şehir merkezi</button></nav><div class="map-viewport" id="mapViewport" tabindex="0" aria-label="Yatay kaydırılabilir Niğde haritası"><canvas id="map" width="1152" height="435" aria-label="Niğde piksel haritası"></canvas></div><div class="scenefoot"><div><b id="selected">🌱 Niğde · Boş arazi</b><div class="muted" style="font-size:12px" id="selectedText">Önce Yönetim → Finans menüsünden yatırım kredisi al.</div></div><span class="legend">Haritayı yana kaydır · araziye dokun</span></div><div class="pad" style="padding-top:0"><div class="stats"><div class="stat"><small>Şirket nakdi</small><b id="cash">—</b></div><div class="stat"><small>Kalan borç</small><b id="debt">—</b></div><div class="stat"><small>Günlük üretim</small><b id="population">—</b></div><div class="stat"><small>Çalışan</small><b id="staff">—</b></div></div><div class="row"><div><small>Son gün net nakit akışı</small><div id="net" style="font-weight:750">—</div></div><div class="clock-controls"><label>Hız <select id="speed"><option value="0">Duraklat</option><option value="1">1×</option><option value="2">2×</option><option value="5">5×</option><option value="10">10×</option></select></label><button id="next">+1 gün</button><button id="week">+1 hafta</button><button id="month">+1 ay</button></div></div><p class="note">Oyun otomatik olarak bu cihazın tarayıcısında kaydedilir. Ekonomi rakamları oynanış için kurgulanmıştır.</p></div></div><div class="sidebar" id="drawer"><button id="closeMenu">✕ Menüyü kapat</button><div class="panel"><div class="tabs"><button class="active" data-tab="business">🏭 Şirket</button><button data-tab="finance">💳 Finans</button><button data-tab="city">🏙️ Şehir</button><button data-tab="history">📊 Rapor</button></div><div class="pad" id="content"></div></div><div class="panel pad"><h2>📰 Niğde Günlüğü</h2><div class="log" id="log"></div></div><div class="row"><button id="reset">↻ Yeni oyun</button><button id="saveGame">Kaydet</button><button id="export">⬇ Kayıt dosyası</button><label style="font-size:12px"><input type="file" id="import" accept="application/json" style="display:none"><button id="importBtn">⬆ Kayıt yükle</button></label></div></div></div><script>
+const $=x=>document.getElementById(x),fmt=n=>Math.round(n).toLocaleString('tr-TR'),money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n),short=n=>Math.abs(n)>=1e6?'$'+(n/1e6).toFixed(2)+' Mn':money(n);const KEY='new-roots-nigde-v4';const ANNUAL_RATE=.02, TERM=240, DAY_MS=10000, LINES=10, WORKERS_PER_LINE=3, ANNUAL_WAGE=12000, MAP_WIDTH=1800, MAX_PLOT_X=17, HIRE_COST=5000;const init=()=>({version:4,month:0,cash:0,debt:0,rate:ANNUAL_RATE,term:60,pop:8500,cityStage:0,staff:0,lines:0,farm:false,automation:0,research:0,solar:0,commercial:0,education:0,sport:0,culture:0,housing:0,energy:0,reputation:38,happiness:46,skill:42,lastNet:0,lastRevenue:0,lastCosts:0,lastDebtPaid:0,logs:['Niğde: Boş arazide yeni bir başlangıç. İlk adım: başlangıç sektörünü seç.'],events:[],gameover:false,businesses:[],lastTick:Date.now(),dayProgress:0,totalProduced:0,paused:false,speed:1,scenario:null,starterFunded:false,contractIncome:0,loans:[],revenueHistory:[],partners:[],lastPartnerYear:0});
+function validateSave(o){if(!o||typeof o!=='object'||!Array.isArray(o.logs)||o.logs.some(v=>typeof v!=='string'))throw Error('Kayıt biçimi');for(const [k,v] of Object.entries(init()))if(typeof v==='number'&&o[k]!==undefined&&(!Number.isFinite(o[k])||Math.abs(o[k])>1e15))throw Error('Geçersiz sayı');for(const k of ['month','debt','staff','lines','automation','research','solar'])if(o[k]!==undefined&&o[k]<0)throw Error('Negatif değer');if(o.staff>120||o.lines>LINES||o.automation>5||o.research>5||o.solar>3||o.businesses&&(!Array.isArray(o.businesses)||o.businesses.length>30))throw Error('Limit');for(const b of o.businesses||[])if(!Object.hasOwn(sectors,b.type)||!/^([a-z]+-[0-9]+)$/.test(b.id)||![b.x,b.y,b.staff,b.equipment].every(Number.isFinite)||b.x<0||b.y<0||b.x>MAX_PLOT_X||b.y>8||b.staff<0||b.staff>30||b.equipment<0||b.equipment>LINES)throw Error('İşletme');}
 function normalize(o){validateSave(o);const n={...init(),...o};n.dayProgress=Math.max(0,Math.min(DAY_MS-1,n.dayProgress));if(!o.version){n.farm=o.lines>0;n.month=o.month*30;n.businesses=[];n.logs.unshift('Eski kayıt Niğde günlük ekonomisine aktarıldı.');}if(!o.version||o.version<3){for(const key of ['cash','debt','lastNet','lastRevenue','lastCosts','lastDebtPaid'])n[key]/=40;n.rate=ANNUAL_RATE;n.logs.unshift('Eski kayıt yeni ekonomiye aktarıldı. Bakiye ve borç 40:1 oyun kuruyla dolara çevrildi.');}if(o.version!==4) {
     n.loans=n.debt>0?[{balance:n.debt,principal:n.debt/TERM,interest:0}]:[];
     n.starterFunded=Boolean(n.farm||n.businesses?.length||n.debt);
@@ -17,19 +23,20 @@ function normalize(o){validateSave(o);const n={...init(),...o};n.dayProgress=Mat
   if(!Array.isArray(n.partners)||n.partners.length>5||n.partners.some(k=>!Object.hasOwn(sectors,k))) throw Error('Ortaklar');
   if(!Array.isArray(n.loans)||n.loans.length>100||n.loans.some(l=>!l||![l.balance,l.principal,l.interest,l.due??0].every(v=>Number.isFinite(v)&&v>=0&&v<=1e15))) throw Error('Kredi kaydı');
   if(!Array.isArray(n.revenueHistory)||n.revenueHistory.length>365||n.revenueHistory.some(v=>!Number.isFinite(v)||v<0)) throw Error('Gelir kaydı');
+  n.lastPartnerYear=o.lastPartnerYear===undefined?Math.max(0,new Date(2026,0,1+n.month).getFullYear()-2026):Math.max(0,Math.floor(n.lastPartnerYear));
   n.version=4;n.cityStage=Math.max(0,Math.min(3,Math.floor(n.cityStage)));n.businesses=n.businesses||[];return n}
 let tab='business',inside=null,selectedTile={x:1,y:1};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{ $('selectedText').textContent='Kayıt saklanamadı. Kayıt dosyasını indirerek ilerlemeni koru.' }};
 function notify(t){s.logs.unshift(t);s.logs=s.logs.slice(0,45);$('toast').textContent=t;$('toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4000)}
 const pay=amount=>{if(s.cash<amount){notify('⚠️ Yetersiz nakit: '+money(amount)+' gerekli.');render();return false}s.cash-=amount;return true};
-const projects={line:{name:'Yeni üretim hattı',cost:250000,desc:'Günlük ürün kapasitesini artırır.',field:'lines',max:4},auto:{name:'Robotik otomasyon',cost:7750,desc:'Verimlilik artar, üretim maliyeti düşer.',field:'automation',max:5},research:{name:'Ar-Ge laboratuvarı',cost:8750,desc:'Teknoloji ve satış fiyatını iyileştirir.',field:'research',max:5},solar:{name:'Çatı güneş enerjisi',cost:6750,desc:'Enerji giderlerini azaltır.',field:'solar',max:3},commercial:{name:'Lojistik ve satış merkezi',cost:13750,desc:'Yeni müşteriler ve ikinci iş kolu.',field:'commercial',max:3},education:{name:'Mesleki eğitim bursu',cost:3125,desc:'Şehirde nitelikli iş gücünü artırır.',field:'education',max:6},sport:{name:'Niğde Spor desteği',cost:4750,desc:'Spor kültürüne ve kent aidiyetine katkı.',field:'sport',max:5},culture:{name:'Kültür ve festival fonu',cost:3750,desc:'Kültürel yaşam ve mutluluğu artırır.',field:'culture',max:5},housing:{name:'Çalışan konutları ortaklığı',cost:10500,desc:'Şehre göçü destekler; konut baskısını azaltır.',field:'housing',max:4}};const sectors = {
-  logistics:{name:'Lojistik merkezi',cost:5000000,equipment:125000,workers:3,output:90,unit:'teslimat',color:'#7faec4',profit:460000,turnover:1550000,starter:true,partner:'packaging'},
-  textile:{name:'Tekstil atölyesi',cost:7200000,equipment:170000,workers:4,output:100,unit:'adet',color:'#b98cb0',profit:660000,turnover:2200000,starter:true,partner:'logistics'},
-  farm:{name:'Dikey tarım',cost:10000000,equipment:250000,workers:5,output:120,unit:'kg',color:'#6bb4a0',profit:1000000,turnover:3000000,starter:true,partner:'food'},
-  packaging:{name:'Ambalaj fabrikası',cost:11500000,equipment:275000,workers:5,output:180,unit:'kutu',color:'#ceae73',profit:1120000,turnover:3500000,requires:'logistics',days:60,partner:'textile'},
-  food:{name:'Gıda işleme',cost:14500000,equipment:330000,workers:5,output:180,unit:'adet',color:'#d08c64',profit:1420000,turnover:4200000,requires:'farm',days:90,partner:'packaging'},
-  metal:{name:'Metal işleme',cost:22000000,equipment:530000,workers:6,output:72,unit:'parça',color:'#8c9cae',profit:2250000,turnover:6100000,requires:'packaging',days:180,partner:'logistics'},
-  electronics:{name:'Elektronik montaj',cost:35000000,equipment:880000,workers:7,output:50,unit:'modül',color:'#83a491',profit:3700000,turnover:9600000,requires:'metal',days:300,partner:'packaging'}
+const projects={line:{name:'Yeni üretim hattı',cost:250000,desc:'Günlük ürün kapasitesini artırır.',field:'lines',max:4},auto:{name:'Robotik otomasyon',cost:7750,desc:'Verimlilik artar, üretim maliyeti düşer.',field:'automation',max:5},research:{name:'Ar-Ge laboratuvarı',cost:8750,desc:'Seviye başına faal tesislerin satış gelirini %2,5 artırır.',field:'research',max:5},solar:{name:'Çatı güneş enerjisi',cost:6750,desc:'Enerji giderlerini azaltır.',field:'solar',max:3},commercial:{name:'Lojistik ve satış merkezi',cost:13750,desc:'Yeni müşteriler ve ikinci iş kolu.',field:'commercial',max:3},education:{name:'Mesleki eğitim bursu',cost:3125,desc:'Şehirde nitelikli iş gücünü artırır.',field:'education',max:6},sport:{name:'Niğde Spor desteği',cost:4750,desc:'Spor kültürüne ve kent aidiyetine katkı.',field:'sport',max:5},culture:{name:'Kültür ve festival fonu',cost:3750,desc:'Kültürel yaşam ve mutluluğu artırır.',field:'culture',max:5},housing:{name:'Çalışan konutları ortaklığı',cost:10500,desc:'Şehre göçü destekler; konut baskısını azaltır.',field:'housing',max:4}};const sectors = {
+  logistics:{name:'Lojistik merkezi',cost:5000000,equipment:125000,output:90,unit:'teslimat',color:'#7faec4',profit:460000,turnover:1550000,starter:true,partner:'packaging'},
+  textile:{name:'Tekstil atölyesi',cost:7200000,equipment:170000,output:100,unit:'adet',color:'#b98cb0',profit:660000,turnover:2200000,starter:true,partner:'logistics'},
+  farm:{name:'Dikey tarım',cost:10000000,equipment:250000,output:120,unit:'kg',color:'#6bb4a0',profit:1000000,turnover:3000000,starter:true,partner:'food'},
+  packaging:{name:'Ambalaj fabrikası',cost:11500000,equipment:275000,output:180,unit:'kutu',color:'#ceae73',profit:1120000,turnover:3500000,requires:'logistics',days:60,partner:'textile'},
+  food:{name:'Gıda işleme',cost:14500000,equipment:330000,output:180,unit:'adet',color:'#d08c64',profit:1420000,turnover:4200000,requires:'farm',days:90,partner:'packaging'},
+  metal:{name:'Metal işleme',cost:22000000,equipment:530000,output:72,unit:'parça',color:'#8c9cae',profit:2250000,turnover:6100000,requires:'packaging',days:180,partner:'logistics'},
+  electronics:{name:'Elektronik montaj',cost:35000000,equipment:880000,output:50,unit:'modül',color:'#83a491',profit:3700000,turnover:9600000,requires:'metal',days:300,partner:'packaging'}
 };
 let s;try{s=normalize(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('new-roots-nigde-v3')||localStorage.getItem('new-roots-nigde-v2')||localStorage.getItem('new-roots-gokdere-v1')||'null')||init())}catch{s=init()}
 
@@ -42,8 +49,8 @@ function sectorProgress(type) {
   const facilities=enterprises();
   if(!facilities.length) return {open:d.starter&&type===s.scenario,label:d.starter?'Başlangıç senaryosu':'İlk tesisten sonra açılabilir'};
   if(d.starter) return {open:true,label:''};
-  const ready=facilities.some(b=>b.type===d.requires&&utilization(b)>=.75);
-  return {open:ready&&s.month>=d.days,label:sectors[d.requires].name+' %75 kapasite · '+d.days+'. gün'};
+  const ready=facilities.some(b=>b.type===d.requires&&runningEquipment(b)>=4);
+  return {open:ready&&s.month>=d.days,label:sectors[d.requires].name+' 4 çalışan ekipman · '+d.days+'. gün'};
 }
 function selectScenario(type) {
   if(enterprises().length||s.starterFunded||!sectors[type]?.starter) return;
@@ -73,7 +80,7 @@ function upgrade(key) {
   const b=target();
   if(!b) return;
   const isEquipment=key==='equipment';
-  const limit=isEquipment?LINES:sectors[b.type].workers*LINES;
+  const limit=isEquipment?LINES:WORKERS_PER_LINE*LINES;
   if(b[key]>=limit||!pay(isEquipment?equipmentCost(b):HIRE_COST)) return;
   if(b.id==='farm') s[isEquipment?'lines':'staff']++;
   else b[key]++;
@@ -89,7 +96,7 @@ function annualIncome() {
 function starterBudget() {
   const d=sectors[s.scenario];
   if(!d?.starter||s.starterFunded||enterprises().length) return 0;
-  return Math.ceil((d.cost+d.equipment*5.44+d.workers*LINES*HIRE_COST+250000)/10000)*10000;
+  return Math.ceil((d.cost+d.equipment*5.44+4*WORKERS_PER_LINE*HIRE_COST+250000)/10000)*10000;
 }
 function creditIncome() {
   return Math.max(annualIncome(),starterBudget()/10,s.contractIncome);
@@ -137,22 +144,26 @@ function prepay() {
   notify(money(paid)+' borç ödendi.');
   render();
 }
+function runningEquipment(b) {
+  return Math.min(LINES,b.equipment,Math.floor(b.staff/WORKERS_PER_LINE));
+}
 function utilization(b) {
-  const workers=sectors[b.type].workers;
-  if(b.staff<workers) return 0;
-  return Math.min(1,b.equipment/LINES,b.staff/(workers*LINES));
+  const running=runningEquipment(b);
+  // The first four machines fund the initial operation. Later machines add capacity.
+  return Math.min(running,4)*.18+Math.max(0,running-4)*(.28/6);
 }
 function production(b) {
-  return sectors[b.type].output*LINES*utilization(b);
+  return sectors[b.type].output*runningEquipment(b);
 }
 function operation(b) {
   const d=sectors[b.type], share=utilization(b);
-  const gross=d.turnover*share/365;
+  const baseGross=d.turnover*share/365;
+  const gross=baseGross*(1+s.research*.025);
   const fixed=d.cost*.005/365;
-  const wages=b.staff*30000/365;
-  const variable=Math.max(0,d.turnover-d.profit-d.cost*.005-d.workers*LINES*30000)*share/365;
-  const savings=share*Math.min(1,(s.automation+s.solar+s.research+s.commercial)/16)*25000/365;
-  const costs=Math.max(gross-d.profit/365,fixed+wages+variable-savings);
+  const wages=b.staff*ANNUAL_WAGE/365;
+  const variable=Math.max(0,d.turnover-d.profit-d.cost*.005-WORKERS_PER_LINE*LINES*ANNUAL_WAGE)*share/365;
+  const savings=share*Math.min(1,(s.automation+s.solar+s.commercial)/16)*25000/365;
+  const costs=Math.max(baseGross-d.profit/365,fixed+wages+variable-savings);
   return {gross,costs};
 }
 function dailyProfit(b) {
@@ -167,9 +178,21 @@ function totals() {
     revenue+=gross;
     costs+=expenses;
     staff+=b.staff;
-    if(utilization(b)>0) activeStaff+=Math.min(b.staff,b.equipment*sectors[b.type].workers);
+    activeStaff+=runningEquipment(b)*WORKERS_PER_LINE;
   }
   return {output,revenue,costs,staff,activeStaff};
+}
+function openIndependentInvestment() {
+  const year=new Date(2026,0,1+s.month).getFullYear()-2026;
+  if(year<1||year<=s.lastPartnerYear||s.partners.length>=5) return;
+  const candidates=enterprises().filter(b=>runningEquipment(b)>0).map(b=>sectors[b.type].partner);
+  const fallback=['logistics','textile','packaging','food','metal'];
+  const type=[...candidates,...fallback].find(key=>key&&!s.partners.includes(key));
+  if(!type) return;
+  s.lastPartnerYear=year;
+  s.partners.push(type);
+  s.logs.unshift('Bağımsız sanayici yeni tesis açtı: '+sectors[type].name+'.');
+  s.logs=s.logs.slice(0,45);
 }
 function next(silent=false) {
   if(s.gameover) return;
@@ -196,18 +219,7 @@ function next(silent=false) {
   }
   s.totalProduced+=t.output;
   s.month++;
-  for(const b of enterprises()) {
-    if(utilization(b)<.5) continue;
-    if(b.id==='farm') s.legacyActiveDays=(s.legacyActiveDays||0)+1;
-    else b.daysActive=(b.daysActive||0)+1;
-    const days=b.id==='farm'?s.legacyActiveDays:b.daysActive;
-    const partner=sectors[b.type].partner;
-    if(days>=45&&partner&&!s.partners.includes(partner)&&s.partners.length<5) {
-      s.partners.push(partner);
-      s.logs.unshift('Bağımsız yatırımcı, '+sectors[b.type].name+' tedarik zincirine '+sectors[partner].name+' yatırımı yaptı.');
-      s.logs=s.logs.slice(0,45);
-    }
-  }
+  openIndependentInvestment();
   s.pop+=(t.activeStaff+s.partners.length*8)*.12+s.housing*.03;
   s.skill=Math.min(100,s.skill+s.education*.01);
   s.happiness=Math.min(100,s.happiness+(s.culture+s.sport)*.01);
@@ -271,28 +283,28 @@ function tree(x,y,size=1) {
   rect(x+3*size,y+3*size,5*size,6*size,'#6d955c');
 }
 function terrain(industry) {
-  rect(0,0,1000,680,'#91a97b');
-  rect(0,0,1000,145,'#bcd8cc');
-  for(let i=0;i<1000;i+=8) {
+  rect(0,0,MAP_WIDTH,680,'#91a97b');
+  rect(0,0,MAP_WIDTH,145,'#bcd8cc');
+  for(let i=0;i<MAP_WIDTH;i+=8) {
     const height=32+28*Math.sin(i*.011)+12*Math.cos(i*.032);
     rect(i,112-height,9,60+height,'#849d91');
     rect(i,137-height*.45,9,48+height*.45,'#637f6c');
   }
   const rng=random(industry?260:138);
   for(let i=0;i<1600;i++) {
-    const x=rng()*1000,y=184+rng()*496;
+    const x=rng()*MAP_WIDTH,y=184+rng()*496;
     rect(x,y,2+Math.floor(rng()*7)*2,2,['#a2b586','#7f9a6d','#8ba377'][i%3]);
   }
   for(let i=0;i<38;i++) {
-    const x=rng()*1000,y=192+rng()*470;
-    if(!industry || x<88 || x>928 || y>621) tree(x,y,1);
+    const x=rng()*MAP_WIDTH,y=192+rng()*470;
+    if(!industry || x<88 || (x>928&&x<1000)||x>1740||y>621) tree(x,y,1);
   }
 }
 function road(x,y,w,h) {
   rect(x-2,y-2,w+4,h+4,'#b0ac95');
   rect(x,y,w,h,'#4c5558');
 }
-function plot(x,y) { return [110+x*70,195+y*48]; }
+function plot(x,y) { return [x<9?110+x*70:1020+(x-9)*70,195+y*48]; }
 function prism(x,y,w,h,depth,roof,front,side) {
   const dx=depth,dy=depth*.55;
   shape([[x,y],[x+dx,y-dy],[x+w+dx,y-dy],[x+w,y]],roof);
@@ -346,8 +358,8 @@ function drawCity() {
   terrain(false);
   const growth=Math.max(0,s.pop-8500);
   const rows=[207,259,318,380,441,507,573,632];
-  for(const y of rows) road(58,y,882,10);
-  for(const x of [100,302,501,701,896]) road(x,187,10,470);
+  for(const y of rows) road(58,y,1660,10);
+  for(const x of [100,302,501,701,896,1098,1298,1498,1698]) road(x,187,10,470);
   const neighborhoods=[
     {x:124,y:244,n:5},{x:324,y:244,n:5},{x:523,y:244,n:5},
     {x:124,y:305,n:5},{x:324,y:305,n:5},{x:523,y:305,n:5},
@@ -356,7 +368,9 @@ function drawCity() {
     {x:124,y:560,n:5},{x:524,y:560,n:5},{x:724,y:560,n:4},
     {x:124,y:620,n:5},{x:324,y:620,n:5},{x:524,y:620,n:5},{x:724,y:620,n:4}
   ];
-  let count=30+Math.min(65,Math.floor(growth/65));
+  for(let row=0;row<6;row++) for(let col=0;col<4;col++)
+    neighborhoods.push({x:920+col*200,y:244+row*61,n:5});
+  let count=30+Math.min(170,Math.floor(growth/65));
   for(const [i,block] of neighborhoods.entries()) {
     for(let j=0;j<block.n&&count>0;j++,count--) {
       const floors=1+Math.min(7,Math.max(0,Math.floor((growth-(i%4)*210-j*65)/560)));
@@ -378,9 +392,11 @@ function drawIndustry() {
   terrain(true);
   const buildings=enterprises();
   road(74,180,19,465);
+  road(982,180,19,465);
   for(const b of buildings) {
     const [x,y]=plot(b.x,b.y);
-    road(84,y+70,x+87-84,10);
+    const access=b.x<9?84:992;
+    road(access,y+70,x+87-access,10);
   }
   if(s.partners.length) {
     road(782,181,12,455);
@@ -404,18 +420,22 @@ function drawInterior() {
   rect(145,165,32,395,'#515f57');
   for(let x=180;x<840;x+=34) rect(x,520,18,4,'#e6ca77');
   for(let i=0;i<b.equipment;i++) {
-    const x=230+(i%4)*145,y=270+Math.floor(i/4)*100;
-    prism(x,y,108,53,14,sectors[b.type].color,'#425955','#314745');
+    const x=205+(i%4)*126,y=250+Math.floor(i/4)*85;
+    prism(x,y,99,53,14,sectors[b.type].color,'#425955','#314745');
+    rect(x+8,y+7,7,6,i<runningEquipment(b)?'#86de91':'#dd9a63');
     for(let j=0;j<4;j++) rect(x+10+j*24,y+20,14,20,b.type==='farm'?'#92b05b':'#b7c1ae');
   }
-  for(let i=0;i<Math.min(b.staff,30);i++) {
-    const x=210+i%15*40,y=453+Math.floor(i/15)*26;
-    rect(x,y,8,7,'#ddbb88');rect(x-2,y+7,12,11,'#2e5870');
-  }
+  rect(722,225,120,105,'#29443e');
+  ctx.fillStyle='#eee9d6';ctx.font='bold 16px monospace';ctx.fillText('İŞÇİ',735,251);
+  ctx.font='bold 22px monospace';ctx.fillText(b.equipment*WORKERS_PER_LINE+' / '+b.staff,735,280);
+  ctx.font='12px monospace';ctx.fillText('Gerekli / Mevcut',730,307);
 }
 function draw() {
   hit=[];
-  ctx.setTransform(c.width/1000,0,0,c.height/680,0,0);
+  const viewport=$('mapViewport');
+  viewport.classList.toggle('inside',Boolean(inside));
+  if(inside) viewport.scrollLeft=0;
+  ctx.setTransform(c.width/(inside?1000:MAP_WIDTH),0,0,c.height/680,0,0);
   if(inside) drawInterior();
   else if(scene==='city') drawCity();
   else drawIndustry();
@@ -429,18 +449,19 @@ function animateTraffic(now) {
   if(background&&!inside&&!document.hidden&&!s.paused) {
     ctx.setTransform(1,0,0,1,0,0);
     ctx.drawImage(background,0,0);
-    ctx.setTransform(c.width/1000,0,0,c.height/680,0,0);
+    ctx.setTransform(c.width/(inside?1000:MAP_WIDTH),0,0,c.height/680,0,0);
     const buildings=enterprises();
     if(scene==='industry') buildings.forEach((b,i)=>{
       const [x,y]=plot(b.x,b.y);
-      const distance=y+75-181+x+87-84;
+      const access=b.x<9?84:992;
+      const distance=y+75-181+x+87-access;
       const phase=(now*.067+i*91)%(distance*2);
       const p=Math.min(phase,distance*2-phase);
       const vertical=y+75-181;
-      vehicle(p<vertical?84:84+p-vertical,p<vertical?181+p:y+75,p<vertical,i);
+      vehicle(p<vertical?access:access+p-vertical,p<vertical?181+p:y+75,p<vertical,i);
     });
     else for(let i=0;i<Math.min(12,3+buildings.length);i++)
-      vehicle(77+(now*(.042+i%2*.014)+i*233)%826,[264,385,578][i%3],false,i);
+      vehicle(77+(now*(.042+i%2*.014)+i*233)%1626,[264,385,578][i%3],false,i);
   }
   requestAnimationFrame(animateTraffic);
 }
@@ -456,16 +477,34 @@ function vehicle(x,y,vertical,i) {
   rect(x-6,y-4,vertical?8:15,vertical?15:8,['#dfb15d','#dfd5b6','#a36154'][i%3]);
   rect(x-4,y-3,vertical?4:6,4,'#5a6e76');
 }
+let mouseDrag=null, suppressMapClick=false;
+c.addEventListener('pointerdown',e=>{
+  if(inside||e.pointerType!=='mouse'||e.button!==0) return;
+  suppressMapClick=false;
+  mouseDrag={x:e.clientX,scroll:$('mapViewport').scrollLeft};
+});
+c.addEventListener('pointermove',e=>{
+  if(!mouseDrag) return;
+  const delta=e.clientX-mouseDrag.x;
+  if(Math.abs(delta)>5&&!suppressMapClick) {
+    c.setPointerCapture(e.pointerId);
+    suppressMapClick=true;
+  }
+  if(suppressMapClick) $('mapViewport').scrollLeft=mouseDrag.scroll-delta;
+});
+window.addEventListener('pointerup',()=>{mouseDrag=null;});
+window.addEventListener('pointercancel',()=>{mouseDrag=null;suppressMapClick=false;});
 c.addEventListener('click', e=>{
+  if(suppressMapClick){suppressMapClick=false;return;}
   if(inside||scene!=='industry') return;
   const bounds=c.getBoundingClientRect();
-  const x=(e.clientX-bounds.left)*1000/bounds.width;
+  const x=(e.clientX-bounds.left)*MAP_WIDTH/bounds.width;
   const y=(e.clientY-bounds.top)*680/bounds.height;
   const building=hit.slice().reverse().find(h=>x>=h.x&&y>=h.y&&x<=h.x+h.w&&y<=h.y+h.h);
   if(building) inside=building.id;
   else {
-    const px=Math.floor((x-110)/70), py=Math.floor((y-195)/48);
-    if(px<0||py<0||px>8||py>8) return;
+    const px=x>=1020?9+Math.floor((x-1020)/70):Math.floor((x-110)/70), py=Math.floor((y-195)/48);
+    if((x>=740&&x<1020)||px<0||py<0||px>MAX_PLOT_X||py>8) return;
     selectedTile={x:px,y:py};
   }
   tab='business';drawer(true);render();
@@ -495,15 +534,16 @@ function businessHTML() {
       return (change>0?'+':'')+money(change)+'/gün';
     };
     return `<h2>${d.name} · İç mekân</h2>
-      <div class="hint">${b.equipment}/${LINES} ekipman · ${b.staff}/${d.workers*LINES} çalışan<br>
+      <div class="hint">${b.equipment}/${LINES} ekipman · ${runningEquipment(b)} faal<br>
+      <strong>İşçi · Gerekli / Mevcut: ${b.equipment*WORKERS_PER_LINE} / ${b.staff}</strong><br>
       Kapasite %${fmt(utilization(b)*100)} · ${fmt(production(b))} ${d.unit}/gün<br>
       Günlük işletme kârı: ${money(dailyProfit(b))}<br>
-      Yıllık tam kapasite hedefi: ${money(d.profit)}</div>
+      Yıllık tam kapasite kârı: ${money(dailyProfit({...b,equipment:LINES,staff:LINES*WORKERS_PER_LINE})*365)}</div>
       <div class="item"><div><strong>Yeni ekipman</strong><small>${b.equipment>=LINES?'Tam kapasite':gain('equipment')}</small></div>
       <button onclick="upgrade('equipment')" ${b.equipment>=LINES?'disabled':''}>${short(equipmentCost(b))}</button></div>
-      <div class="item"><div><strong>Bir çalışan daha</strong><small>${b.staff>=d.workers*LINES?'Tam kadro':gain('staff')}</small></div>
-      <button onclick="upgrade('staff')" ${b.staff>=d.workers*LINES?'disabled':''}>${money(HIRE_COST)}</button></div>
-      <p class="note">Kâr etkileri mevcut ekipman ve kadroya göre hesaplanır. Eksik hat veya kadro, bir yükseltmenin getirisini sınırlayabilir.</p>
+      <div class="item"><div><strong>Bir çalışan daha</strong><small>${b.staff>=WORKERS_PER_LINE*LINES?'Tam kadro':gain('staff')}</small></div>
+      <button onclick="upgrade('staff')" ${b.staff>=WORKERS_PER_LINE*LINES?'disabled':''}>${money(HIRE_COST)}</button></div>
+      <p class="note">Kâr etkileri mevcut ekipman ve kadroya göre hesaplanır. Her ekipman 3 işçiyle çalışır. Eksik kadrolu ekipman üretim yapmaz.</p>
       <button onclick="inside=null;render()">Araziye dön</button>`;
   }
   const facilities=enterprises();
